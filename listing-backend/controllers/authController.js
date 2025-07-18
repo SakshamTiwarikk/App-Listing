@@ -4,14 +4,13 @@ const jwt = require("jsonwebtoken");
 
 // Register new user
 exports.register = async (req, res) => {
-  const { name, age, email, password } = req.body;
+  const { name, email, password } = req.body;
 
-  if (!name || !age || !email || !password) {
+  if (!name || !email || !password) {
     return res.status(400).json({ message: "All fields are required" });
   }
 
   try {
-    // Check if user already exists
     const existingUser = await pool.query(
       "SELECT * FROM users WHERE email = $1",
       [email]
@@ -22,8 +21,8 @@ exports.register = async (req, res) => {
 
     const hashed = await bcrypt.hash(password, 10);
     await pool.query(
-      "INSERT INTO users (name, age, email, password) VALUES ($1, $2, $3, $4)",
-      [name, age, email, hashed]
+      "INSERT INTO users (name, email, password) VALUES ($1, $2, $3)",
+      [name, email, hashed]
     );
 
     res.status(201).json({ message: "User registered successfully" });

@@ -1,6 +1,6 @@
 "use client";
 
-import type React from "react";
+import React from "react";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -115,7 +115,7 @@ export default function RegisterPage() {
                       id="name"
                       name="name"
                       type="text"
-                      placeholder="John Doe"
+                      placeholder="Enter your name"
                       className="pl-10 h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                       value={formData.name}
                       onChange={handleInputChange}
@@ -138,7 +138,7 @@ export default function RegisterPage() {
                       id="email"
                       name="email"
                       type="email"
-                      placeholder="john.doe@gmail.com"
+                      placeholder="Enter your email"
                       className="pl-10 h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                       value={formData.email}
                       onChange={handleInputChange}
@@ -161,7 +161,7 @@ export default function RegisterPage() {
                       id="password"
                       name="password"
                       type={showPassword ? "text" : "password"}
-                      placeholder="••••••••••••••••"
+                      placeholder="Enter your password"
                       className="pl-10 pr-10 h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                       value={formData.password}
                       onChange={handleInputChange}
@@ -195,7 +195,7 @@ export default function RegisterPage() {
                       id="confirmPassword"
                       name="confirmPassword"
                       type={showConfirmPassword ? "text" : "password"}
-                      placeholder="••••••••••••••••"
+                      placeholder="Confirm you password"
                       className="pl-10 pr-10 h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                       value={formData.confirmPassword}
                       onChange={handleInputChange}
