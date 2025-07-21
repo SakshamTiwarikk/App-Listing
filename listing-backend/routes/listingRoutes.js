@@ -5,9 +5,13 @@ const path = require("path");
 const authMiddleware = require("../middleware/authMiddleware");
 const {
   createListing,
+  createGroupedListings, // 👈 new controller
   getListings,
+  getGroupedListings,
   updateListing,
+  updateGroupedListings, // 👈 new controller
 } = require("../controllers/listingController");
+
 console.log("✅ listingRoutes.js loaded");
 
 // Configure Multer
@@ -20,6 +24,11 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
+/**
+ * Routes
+ */
+
+// Create single listing
 router.post(
   "/listing",
   authMiddleware,
@@ -27,7 +36,15 @@ router.post(
   createListing
 );
 
-// Update listing route (edit post)
+// Create grouped listings
+router.post(
+  "/listing/group",
+  authMiddleware,
+  upload.array("images", 20),
+  createGroupedListings // 👈 new controller for group upload
+);
+
+// Update single listing
 router.put(
   "/listings/:id",
   authMiddleware,
@@ -39,6 +56,17 @@ router.put(
   updateListing
 );
 
+// Update grouped listings
+router.put(
+  "/listing/group/:groupId",
+  authMiddleware,
+  upload.array("images", 20),
+  updateGroupedListings // 👈 new controller for group edit
+);
+
+// Get all listings
 router.get("/listings", authMiddleware, getListings);
+// Get grouped listings
+router.get("/listing/group", authMiddleware, getGroupedListings);
 
 module.exports = router;
