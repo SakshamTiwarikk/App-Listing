@@ -2,35 +2,52 @@ const pool = require("../db");
 const fs = require("fs");
 const path = require("path");
 
+// ✅ Create Listing
 exports.createListing = async (req, res) => {
   const { name, price } = req.body;
   const userId = req.userId;
+
+  if (!name || !price || !req.files || req.files.length === 0) {
+    return res
+      .status(400)
+      .json({ message: "Name, price, and at least one image required." });
+  }
 
   const images = req.files.map((file) => file.filename);
 
   try {
     const result = await pool.query(
-      "INSERT INTO listings (user_id, name, price, images) VALUES ($1, $2, $3, $4) RETURNING *",
+      `INSERT INTO listings (user_id, name, price, images) VALUES ($1, $2, $3, $4) RETURNING *`,
       [userId, name, price, images]
     );
-    res.json(result.rows[0]);
+
+    return res.status(201).json(result.rows[0]);
   } catch (err) {
-    res.status(500).json({ message: "Error creating listing" });
+    console.error("Error creating listing:", err);
+    return res
+      .status(500)
+      .json({ message: "Error creating listing", error: err.message });
   }
 };
 
+// ✅ Get User Listings
 exports.getListings = async (req, res) => {
+  const userId = req.userId;
   try {
     const result = await pool.query(
-      "SELECT * FROM listings WHERE user_id = $1",
-      [req.userId]
+      `SELECT * FROM listings WHERE user_id = $1 ORDER BY created_at DESC`,
+      [userId]
     );
-    res.json(result.rows);
+    return res.json(result.rows);
   } catch (err) {
-    res.status(500).json({ message: "Error fetching listings" });
+    console.error("Error fetching listings:", err);
+    res
+      .status(500)
+      .json({ message: "Error fetching listings", error: err.message });
   }
 };
 
+// ✅ Update Listing
 exports.updateListing = async (req, res) => {
   const listingId = req.params.id;
   const userId = req.userId;
@@ -38,7 +55,7 @@ exports.updateListing = async (req, res) => {
 
   try {
     const result = await pool.query(
-      "SELECT * FROM listings WHERE id = $1 AND user_id = $2",
+      `SELECT * FROM listings WHERE id = $1 AND user_id = $2`,
       [listingId, userId]
     );
 
@@ -48,28 +65,30 @@ exports.updateListing = async (req, res) => {
         .json({ message: "Listing not found or unauthorized" });
     }
 
-    let imageFilenames = result.rows[0].images;
+    let currentImages = result.rows[0].images;
 
+    // Handle image replacement
     if (req.files && req.files.length > 0) {
-      imageFilenames.forEach((filename) => {
+      currentImages.forEach((filename) => {
         const filePath = path.join(__dirname, "../uploads", filename);
         if (fs.existsSync(filePath)) {
           fs.unlinkSync(filePath);
         }
       });
-
-      imageFilenames = req.files.map((file) => file.filename);
+      currentImages = req.files.map((file) => file.filename);
     }
 
     const updateResult = await pool.query(
-      "UPDATE listings SET name = $1, price = $2, images = $3 WHERE id = $4 RETURNING *",
-      [name, price, imageFilenames, listingId]
+      `UPDATE listings SET name = $1, price = $2, images = $3 WHERE id = $4 RETURNING *`,
+      [name, price, currentImages, listingId]
     );
 
-    res.json(updateResult.rows[0]);
+    return res.json(updateResult.rows[0]);
   } catch (err) {
-    console.error("Update listing error:", err);
-    res.status(500).json({ message: "Error updating listing" });
+    console.error("Error updating listing:", err);
+    return res
+      .status(500)
+      .json({ message: "Error updating listing", error: err.message });
   }
 };
 // CREATE GROUPED LISTINGS
