@@ -33,19 +33,36 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const res = await axios.post("http://localhost:5000/api/login", {
+      const res = await axios.post("http://localhost:5000/api/auth/login", {
         email,
         password,
       });
-      // Save JWT token to localStorage
+      // Save JWT token to localStorage (for compatibility)
       localStorage.setItem("token", res.data.token);
+      const { token, user } = res.data;
+
+      // Map frontendUserType and store full user data
+      const frontendUserType =
+        user.userType === 1 ? "company" : user.userType === 2 ? "user" : "user";
+
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          token,
+          ...user,
+          frontendUserType,
+        })
+      );
+
       // Redirect to dashboard
       router.push("/dashboard");
     } catch (err) {
       if (axios.isAxiosError(err)) {
         setError(err.response?.data?.message || "Login failed");
+        console.log("Axios error:", err.response?.data); // Debug
       } else {
         setError("An unexpected error occurred.");
+        console.log("Unexpected error:", err); // Debug
       }
     } finally {
       setIsLoading(false);

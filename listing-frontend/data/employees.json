@@ -1,0 +1,44 @@
+[
+  {
+    "id": 1,
+    "name": "John Doe",
+    "dob": "1990-01-15",
+    "address": "123 Main St, City, State",
+    "photo": null,
+    "aadhaar_card": null,
+    "pan_card": null,
+    "joining_date": "2023-01-01",
+    "status": "Active",
+    "email_id": "john@example.com",
+    "created_at": "2023-01-01T00:00:00Z",
+    "updated_at": "2023-01-01T00:00:00Z"
+  },
+  {
+    "id": 1753532214611,
+    "name": "Saksham Tiwari",
+    "dob": "2025-07-17",
+    "address": "410/A4 Canal Kinship Salaiya\r\nnear BDA colony",
+    "photo": null,
+    "aadhaar_card": null,
+    "pan_card": null,
+    "joining_date": "2025-07-18",
+    "status": "Active",
+    "email_id": "sakshamtiwari157@gmail.com",
+    "created_at": "2025-07-26T12:16:54.611Z",
+    "updated_at": "2025-07-26T12:16:54.611Z"
+  },
+  {
+    "id": 1753783139376,
+    "name": "pragya",
+    "dob": "2001-01-13",
+    "address": "fewgwr",
+    "photo": "signature (2).png",
+    "aadhaar_card": "graduation marksheet.jpg",
+    "pan_card": "headphone1.png",
+    "joining_date": "2025-07-21",
+    "status": "Active",
+    "email_id": "p@gmail.com",
+    "created_at": "2025-07-29T09:58:59.376Z",
+    "updated_at": "2025-07-29T09:58:59.376Z"
+  }
+]

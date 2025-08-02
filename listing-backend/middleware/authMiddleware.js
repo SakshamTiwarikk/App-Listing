@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
+const pool = require("../db");
 
-module.exports = (req, res, next) => {
+const authMiddleware = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -11,11 +12,22 @@ module.exports = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.userId = decoded.id; // used in controller
-    req.user = decoded; // optional access to full user payload
+    const userId = decoded.id;
+
+    const result = await pool.query("SELECT * FROM users WHERE id = $1", [
+      userId,
+    ]);
+
+    if (result.rows.length === 0) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    req.user = result.rows[0]; // Contains company_id
     next();
   } catch (err) {
     console.error("JWT Verification Error:", err.message);
     return res.status(401).json({ message: "Invalid or expired token" });
   }
 };
+
+module.exports = authMiddleware;
