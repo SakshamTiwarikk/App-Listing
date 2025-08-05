@@ -15,39 +15,111 @@ const safeDeleteFile = (filename) => {
   }
 };
 
-// ✅ Create Listing with improved error handling
+// ✅ Create Listing with improved error handling and validation
 exports.createListing = async (req, res) => {
   console.log("📤 Creating listing...");
   console.log("Request body:", req.body);
   console.log("Files received:", req.files?.length || 0);
 
-  const { name, price } = req.body;
-  const userId = req.userId;
+  // ✅ Check if req.user is set by authMiddleware
+  console.log("🔐 req.user from token:", req.user);
 
-  // Validation
-  if (!name || !price) {
+  const {
+    name,
+    price,
+    description,
+    city,
+    property_type,
+    bhk,
+    facing,
+    size,
+    floors,
+    total_floors,
+    location,
+    street_landmark,
+    map_link,
+    rent_or_lease,
+    deposit,
+    maintenance,
+    available_from,
+    furnishing,
+    parking,
+    preferred_tenants,
+    non_veg_allowed,
+    shown_by,
+    booking_date,
+    agreement_duration,
+  } = req.body;
+  const userId = req.user?.id;
+
+  // ✅ Check extracted userId
+  console.log("👤 Extracted userId:", userId);
+
+  if (!userId) {
+    return res.status(401).json({ message: "Unauthorized: Missing user ID" });
+  }
+
+  // Enhanced validation
+  const errors = [];
+  if (!name || name.trim() === "") {
+    errors.push("Name is required.");
+  }
+  if (!price || isNaN(parseFloat(price))) {
+    errors.push("Price is required and must be a valid number.");
+  }
+  if (!req.files || req.files.length === 0) {
+    errors.push("At least one image is required.");
+  }
+
+  if (errors.length > 0) {
     // Clean up uploaded files if validation fails
     if (req.files && req.files.length > 0) {
       req.files.forEach((file) => safeDeleteFile(file.filename));
     }
-    return res.status(400).json({
-      message: "Name and price are required.",
-    });
-  }
-
-  if (!req.files || req.files.length === 0) {
-    return res.status(400).json({
-      message: "At least one image is required.",
-    });
+    return res.status(400).json({ message: errors.join(" ") });
   }
 
   const images = req.files.map((file) => file.filename);
-  console.log("Processed images:", images);
+  console.log("🖼️ Processed images:", images);
 
   try {
+    const parsedPrice = parseFloat(price);
     const result = await pool.query(
-      `INSERT INTO listings (user_id, name, price, images) VALUES ($1, $2, $3, $4) RETURNING *`,
-      [userId, name, parseFloat(price), images]
+      `INSERT INTO listings (
+        user_id, name, price, images, description, city, property_type, bhk, facing,
+        size, floors, total_floors, location, street_landmark, map_link, rent_or_lease,
+        deposit, maintenance, available_from, furnishing, parking, preferred_tenants,
+        non_veg_allowed, shown_by, booking_date, agreement_duration
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
+        $17, $18, $19, $20, $21, $22, $23, $24, $25, $26) RETURNING *`,
+      [
+        userId,
+        name.trim(),
+        parsedPrice,
+        images,
+        description || null,
+        city || null,
+        property_type || null,
+        bhk || null,
+        facing || null,
+        size || null,
+        floors || null,
+        total_floors || null,
+        location || null,
+        street_landmark || null,
+        map_link || null,
+        rent_or_lease || null,
+        deposit || null,
+        maintenance || null,
+        available_from || null,
+        furnishing || null,
+        parking || null,
+        preferred_tenants || null,
+        non_veg_allowed === "true" ? true : false || null,
+        shown_by || null,
+        booking_date || null,
+        agreement_duration || null,
+      ]
     );
 
     console.log("✅ Listing created successfully:", result.rows[0]);
@@ -71,7 +143,8 @@ exports.createListing = async (req, res) => {
 exports.getListings = async (req, res) => {
   console.log("📥 Fetching listings...");
 
-  const userId = req.userId;
+  const userId = req.user?.id;
+  console.log("🔐 User ID from token:", userId);
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
   const offset = (page - 1) * limit;
@@ -91,6 +164,7 @@ exports.getListings = async (req, res) => {
     );
 
     console.log(`✅ Found ${result.rows.length} listings (page ${page})`);
+    console.log(`Result = ${result}`);
 
     return res.json({
       listings: result.rows,
@@ -113,7 +187,7 @@ exports.updateListing = async (req, res) => {
   console.log("🔄 Updating listing...");
 
   const listingId = req.params.id;
-  const userId = req.userId;
+  const userId = req.user?.id;
   const { name, price } = req.body;
 
   console.log("Update data:", {
@@ -129,6 +203,7 @@ exports.updateListing = async (req, res) => {
       `SELECT * FROM listings WHERE id = $1 AND user_id = $2`,
       [listingId, userId]
     );
+    console.log("Listing check result:", result);
 
     if (result.rows.length === 0) {
       // Clean up uploaded files if listing not found
@@ -183,7 +258,7 @@ exports.updateListing = async (req, res) => {
 exports.createGroupedListings = async (req, res) => {
   console.log("📤 Creating grouped listing...");
 
-  const userId = req.userId;
+  const userId = req.user?.id;
   const { name, price, description } = req.body;
   const images = req.files?.map((file) => file.filename) || [];
 
@@ -222,7 +297,7 @@ exports.updateGroupedListings = async (req, res) => {
   console.log("🔄 Updating grouped listing...");
 
   const groupId = req.params.groupId;
-  const userId = req.userId;
+  const userId = req.user?.id;
   const { name, price, description } = req.body;
 
   try {
@@ -284,7 +359,7 @@ exports.updateGroupedListings = async (req, res) => {
 exports.getGroupedListings = async (req, res) => {
   console.log("📥 Fetching grouped listings...");
 
-  const userId = req.userId;
+  const userId = req.user?.id;
 
   try {
     const result = await pool.query(

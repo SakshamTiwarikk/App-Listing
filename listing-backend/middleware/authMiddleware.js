@@ -1,32 +1,26 @@
 const jwt = require("jsonwebtoken");
-const pool = require("../db");
+const JWT_SECRET = "FVgK7RA3bW1zuwiHTMKAfdkVRoonD660VB4R+yl6etQ="; // ✅ Use correct secret
 
 const authMiddleware = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ message: "No token provided" });
+    return res.status(401).json({ message: "Unauthorized: No token provided" });
   }
 
   const token = authHeader.split(" ")[1];
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const userId = decoded.id;
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
 
-    const result = await pool.query("SELECT * FROM users WHERE id = $1", [
-      userId,
-    ]);
+    // ✅ Console log decoded payload
+    console.log("✅ Authenticated user:", req.user);
 
-    if (result.rows.length === 0) {
-      return res.status(401).json({ message: "User not found" });
-    }
-
-    req.user = result.rows[0]; // Contains company_id
     next();
-  } catch (err) {
-    console.error("JWT Verification Error:", err.message);
-    return res.status(401).json({ message: "Invalid or expired token" });
+  } catch (error) {
+    console.error("❌ JWT verification failed:", error);
+    res.status(401).json({ message: "Unauthorized: Invalid token" });
   }
 };
 
