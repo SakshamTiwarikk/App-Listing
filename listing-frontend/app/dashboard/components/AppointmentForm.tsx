@@ -31,7 +31,11 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
 
   useEffect(() => {
     axios
-      .get("http://localhost:5000/api/employees/public/active")
+      .get("http://localhost:5000/api/employees/active", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`, // or wherever you store your token
+        },
+      })
       .then((res) => setEmployees(res.data))
       .catch((err) => console.error("Failed to fetch employees", err));
   }, []);

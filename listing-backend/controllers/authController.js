@@ -39,7 +39,12 @@ exports.register = async (req, res) => {
     if (lowerEmail.startsWith("admin@")) {
       userType = 1;
       companyId = uuidv4();
-      console.log("Admin detected, user_type:", userType, "company_id:", companyId);
+      console.log(
+        "Admin detected, user_type:",
+        userType,
+        "company_id:",
+        companyId
+      );
     } else if (lowerEmail.startsWith("employee@")) {
       userType = 2;
       const domain = lowerEmail.split("@")[1];
@@ -52,7 +57,8 @@ exports.register = async (req, res) => {
 
       if (adminQuery.rows.length === 0) {
         return res.status(400).json({
-          message: "No admin found for this company. Ask admin to register first.",
+          message:
+            "No admin found for this company. Ask admin to register first.",
         });
       }
 

@@ -3,21 +3,26 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar from "../dashboard/components/Sidebar";
 import MyListings from "../dashboard/components/MyListings";
-import EmployeesPage from "../dashboard/components/EmployeesPage"; // Import the new component
+import EmployeesPage from "../dashboard/components/EmployeesPage";
 import BookAppointment from "../dashboard/BookAppointment";
+import RentCollection from "../dashboard/components/RentCollection";
 
 export default function DashboardPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<string>("my-listings");
   const [token, setToken] = useState<string | null>(null);
+  const [companyId, setCompanyId] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       const storedToken = localStorage.getItem("token");
+      const storedCompanyId = localStorage.getItem("companyId"); // Get companyId from storage
+      
       if (!storedToken) {
         router.push("/login");
       } else {
         setToken(storedToken);
+        setCompanyId(storedCompanyId);
       }
     }
   }, [router]);
@@ -25,6 +30,7 @@ export default function DashboardPage() {
   const handleLogout = () => {
     if (typeof window !== "undefined") {
       localStorage.removeItem("token");
+      localStorage.removeItem("companyId");
     }
     router.push("/login");
   };
@@ -32,6 +38,7 @@ export default function DashboardPage() {
   const handleTokenExpired = () => {
     if (typeof window !== "undefined") {
       localStorage.removeItem("token");
+      localStorage.removeItem("companyId");
     }
     router.push("/login");
   };
@@ -241,6 +248,18 @@ export default function DashboardPage() {
             </div>
           </div>
         );
+      case "rent-collection":
+        // Check if token and provide fallback
+        if (!token) {
+          return (
+            <div className="p-6">
+              <h2 className="text-xl font-semibold mb-4">Rent Collection</h2>
+              <p>Please log in to view rent collection.</p>
+            </div>
+          );
+        }
+        return <RentCollection token={token} companyId={companyId || ""} />;
+
       default:
         return null;
     }

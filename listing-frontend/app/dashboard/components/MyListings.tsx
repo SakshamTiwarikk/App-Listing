@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
+import Image from "next/image";
 import ImageCarousel from "./ImageCarousel";
 
-// Types
 type Listing = {
   id: number | string;
   name: string;
@@ -30,6 +30,13 @@ type Listing = {
   shown_by?: string | null;
   booking_date?: string | null;
   agreement_duration?: string | null;
+  bookingStatus?: string;
+  transaction_image?: string | null;
+  mode_of_payment?: string | null;
+  bookedBy?: string | null;
+  updatedOn?: string | null;
+  updatedBy?: string | null;
+  companyId?: string | null;
 };
 
 type ImagePreview = { file: File; url: string; name: string };
@@ -73,6 +80,13 @@ export default function MyListings({ token, onTokenExpired }: MyListingsProps) {
   const [agreementDuration, setAgreementDuration] = useState<string>("");
   const [images, setImages] = useState<File[]>([]);
   const [imagePreview, setImagePreview] = useState<ImagePreview[]>([]);
+  const [bookingStatus, setBookingStatus] = useState<string>("available");
+  const [transactionImage, setTransactionImage] = useState<File | null>(null);
+  const [modeOfPayment, setModeOfPayment] = useState<string>("");
+  const [bookedBy, setBookedBy] = useState<string>("");
+  const [employees, setEmployees] = useState<{ id: string; name: string }[]>(
+    []
+  );
   const [showModal, setShowModal] = useState<boolean>(false);
 
   // Edit form state
@@ -105,49 +119,40 @@ export default function MyListings({ token, onTokenExpired }: MyListingsProps) {
     useState<string>("");
   const [editImages, setEditImages] = useState<File[]>([]);
   const [editImagePreview, setEditImagePreview] = useState<ImagePreview[]>([]);
+  const [editBookingStatus, setEditBookingStatus] =
+    useState<string>("available");
+  const [editTransactionImage, setEditTransactionImage] = useState<File | null>(
+    null
+  );
+  const [editModeOfPayment, setEditModeOfPayment] = useState<string>("");
+  const [editBookedBy, setEditBookedBy] = useState<string>("");
 
-  // Fetch user listings with pagination
+  // Update Status Modal state
+  const [showStatusModal, setShowStatusModal] = useState<boolean>(false);
+  const [statusListing, setStatusListing] = useState<Listing | null>(null);
+
   const fetchListings = useCallback(
     async (page = 1, append = false) => {
       if (loading) return;
-
       setLoading(true);
-      // debugger
       try {
         const response = await fetch(
           `http://localhost:5000/api/listings?page=${page}&limit=${ITEMS_PER_PAGE}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
-
         if (!response.ok) {
-          if (response.status === 401) {
-            onTokenExpired();
-            return;
-          }
+          if (response.status === 401) onTokenExpired();
           throw new Error("Failed to fetch listings");
         }
-
         const data = await response.json();
         const newListings = data.listings || data;
         const totalCount = data.total || newListings.length;
-
-        if (append) {
-          setListings((prev) => [...prev, ...newListings]);
-        } else {
-          setListings(newListings);
-        }
-
+        if (append) setListings((prev) => [...prev, ...newListings]);
+        else setListings(newListings);
         setHasMore(page * ITEMS_PER_PAGE < totalCount);
       } catch (err) {
         console.error("Failed to fetch listings", err);
-        if (!append) {
-          onTokenExpired();
-        }
+        if (!append) onTokenExpired();
       } finally {
         setLoading(false);
       }
@@ -155,7 +160,6 @@ export default function MyListings({ token, onTokenExpired }: MyListingsProps) {
     [token, loading, ITEMS_PER_PAGE, onTokenExpired]
   );
 
-  // Load more listings (infinite scroll)
   const loadMore = useCallback(() => {
     if (hasMore && !loading) {
       const nextPage = currentPage + 1;
@@ -164,28 +168,51 @@ export default function MyListings({ token, onTokenExpired }: MyListingsProps) {
     }
   }, [currentPage, hasMore, loading, fetchListings]);
 
-  // Scroll event handler for infinite scroll
   useEffect(() => {
     const handleScroll = () => {
       const scrollTop =
         window.pageYOffset || document.documentElement.scrollTop;
       const scrollHeight = document.documentElement.scrollHeight;
       const clientHeight = window.innerHeight;
-
       if (
         scrollTop + clientHeight >= scrollHeight - 1000 &&
         hasMore &&
         !loading
-      ) {
+      )
         loadMore();
-      }
     };
-
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, [loadMore, hasMore, loading]);
 
-  // Image handling functions
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      try {
+        if (!token) {
+          console.warn("No token available, skipping employee fetch");
+          return;
+        }
+        const response = await fetch(
+          "http://localhost:5000/api/employees/active",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(
+            `Failed to fetch employees: ${response.status} - ${errorText}`
+          );
+        }
+        const data = await response.json();
+        setEmployees(data);
+      } catch (err: any) {
+        console.error("Error fetching employees:", err.message);
+      }
+    };
+    if (token) fetchEmployees();
+  }, [token]);
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
     if (files.length > 5) {
@@ -204,9 +231,7 @@ export default function MyListings({ token, onTokenExpired }: MyListingsProps) {
           name: file.name,
         };
         loadedCount++;
-        if (loadedCount === files.length) {
-          setImagePreview([...previews]);
-        }
+        if (loadedCount === files.length) setImagePreview([...previews]);
       };
       reader.readAsDataURL(file);
     });
@@ -230,12 +255,24 @@ export default function MyListings({ token, onTokenExpired }: MyListingsProps) {
           name: file.name,
         };
         loadedCount++;
-        if (loadedCount === files.length) {
-          setEditImagePreview([...previews]);
-        }
+        if (loadedCount === files.length) setEditImagePreview([...previews]);
       };
       reader.readAsDataURL(file);
     });
+  };
+
+  const handleTransactionImageChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0] || null;
+    setTransactionImage(file);
+  };
+
+  const handleEditTransactionImageChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0] || null;
+    setEditTransactionImage(file);
   };
 
   const removeImage = (index: number) => {
@@ -256,7 +293,6 @@ export default function MyListings({ token, onTokenExpired }: MyListingsProps) {
     setEditImagePreview(newPreviews);
   };
 
-  // Handle new listing submit
   const handleAddListing = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!name.trim() || !price.trim()) {
@@ -298,38 +334,20 @@ export default function MyListings({ token, onTokenExpired }: MyListingsProps) {
     formData.append("shown_by", shownBy.trim());
     formData.append("booking_date", bookingDate);
     formData.append("agreement_duration", agreementDuration.trim());
-    images.forEach((image) => {
-      formData.append("images", image);
-    });
+    formData.append("bookingStatus", bookingStatus);
+    if (transactionImage)
+      formData.append("transaction_image", transactionImage);
+    formData.append("mode_of_payment", modeOfPayment);
+    formData.append("bookedBy", bookedBy);
+    images.forEach((image) => formData.append("images", image));
 
     try {
       const response = await fetch("http://localhost:5000/api/listing", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
-
-      if (!response.ok) {
-        let errorMessage = `HTTP Error ${response.status}: ${response.statusText}`;
-        try {
-          const errorData = await response.json();
-          if (response.status === 400) {
-            errorMessage = errorData.message || "Invalid input data";
-          } else if (response.status === 401) {
-            errorMessage = errorData.message || "Unauthorized access";
-            onTokenExpired();
-          } else if (response.status >= 500) {
-            errorMessage = errorData.message || "Server error occurred";
-          }
-        } catch (jsonError) {
-          console.error("Error parsing JSON response:", jsonError);
-        }
-        throw new Error(errorMessage);
-      }
-
-      const data = await response.json();
+      if (!response.ok) throw new Error(await response.text());
       resetAddForm();
       setCurrentPage(1);
       setListings([]);
@@ -337,78 +355,164 @@ export default function MyListings({ token, onTokenExpired }: MyListingsProps) {
       alert("Listing added successfully!");
     } catch (err: any) {
       console.error("Error adding listing:", err);
-      alert(err.message || "Failed to add listing. Please try again.");
+      alert(err.message || "Failed to add listing.");
     }
   };
 
-  // Handle edit listing submit
   const handleEditSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    console.log("🔄 Starting edit submit...");
+    console.log("Edit Listing ID:", editListing?.id);
+    console.log("Edit Booking Status:", editBookingStatus);
+    console.log("Edit Booked By:", editBookedBy);
+
     if (!editName.trim() || !editPrice.trim()) {
       alert("Please fill in all required fields");
       return;
     }
 
-    const formData = new FormData();
-    formData.append("name", editName.trim());
-    formData.append("price", editPrice);
-    formData.append("description", editDescription.trim());
-    formData.append("city", editCity.trim());
-    formData.append("property_type", editPropertyType.trim());
-    formData.append("bhk", editBhk.trim());
-    formData.append("facing", editFacing.trim());
-    formData.append("size", editSize.trim());
-    formData.append("floors", editFloors.trim());
-    formData.append("total_floors", editTotalFloors.trim());
-    formData.append("location", editLocation.trim());
-    formData.append("street_landmark", editStreetLandmark.trim());
-    formData.append("map_link", editMapLink.trim());
-    formData.append("rent_or_lease", editRentOrLease.trim());
-    formData.append("deposit", editDeposit.trim());
-    formData.append("maintenance", editMaintenance.trim());
-    formData.append("available_from", editAvailableFrom.trim());
-    formData.append("furnishing", editFurnishing.trim());
-    formData.append("parking", editParking.trim());
-    formData.append("preferred_tenants", editPreferredTenants.trim());
-    formData.append("non_veg_allowed", editNonVegAllowed.toString());
-    formData.append("shown_by", editShownBy.trim());
-    formData.append("booking_date", editBookingDate);
-    formData.append("agreement_duration", editAgreementDuration.trim());
-    if (editImages.length > 0) {
-      editImages.forEach((image) => {
-        formData.append("images", image);
-      });
-    }
-
     try {
-      const response = await fetch(
-        `http://localhost:5000/api/listings/${editListing?.id}`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
-        }
-      );
+      // ✅ For simple updates without new images, send JSON
+      if (editImages.length === 0) {
+        console.log("📤 Sending JSON update (no new images)...");
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to update listing");
+        const updateData = {
+          name: editName.trim(),
+          price: editPrice,
+          description: editDescription.trim(),
+          city: editCity.trim(),
+          property_type: editPropertyType.trim(),
+          bhk: editBhk.trim(),
+          facing: editFacing.trim(),
+          size: editSize.trim(),
+          floors: editFloors.trim(),
+          total_floors: editTotalFloors.trim(),
+          location: editLocation.trim(),
+          street_landmark: editStreetLandmark.trim(),
+          map_link: editMapLink.trim(),
+          rent_or_lease: editRentOrLease.trim(),
+          deposit: editDeposit.trim(),
+          maintenance: editMaintenance.trim(),
+          available_from: editAvailableFrom.trim(),
+          furnishing: editFurnishing.trim(),
+          parking: editParking.trim(),
+          preferred_tenants: editPreferredTenants.trim(),
+          non_veg_allowed: editNonVegAllowed,
+          shown_by: editShownBy.trim(),
+          booking_date: editBookingDate,
+          agreement_duration: editAgreementDuration.trim(),
+          bookingStatus: editBookingStatus, // ✅ This is key for rent collection
+          bookedBy: editBookedBy,
+        };
+
+        console.log("📝 Update payload:", updateData);
+
+        const response = await fetch(
+          `http://localhost:5000/api/listings/${editListing?.id}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(updateData),
+          }
+        );
+
+        console.log("📡 Response status:", response.status);
+        console.log("📡 Response ok:", response.ok);
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => null);
+          const errorText = await response.text().catch(() => "Unknown error");
+
+          console.error("❌ Response error data:", errorData);
+          console.error("❌ Response error text:", errorText);
+
+          throw new Error(
+            errorData?.message || errorText || `HTTP ${response.status}`
+          );
+        }
+
+        const result = await response.json();
+        console.log("✅ Update successful:", result);
+      } else {
+        // ✅ For updates with new images, send FormData
+        console.log("📤 Sending FormData update (with new images)...");
+
+        const formData = new FormData();
+        formData.append("name", editName.trim());
+        formData.append("price", editPrice);
+        formData.append("description", editDescription.trim());
+        formData.append("bookingStatus", editBookingStatus);
+        formData.append("bookedBy", editBookedBy);
+        // ... add other fields as needed
+
+        editImages.forEach((image) => formData.append("images", image));
+
+        const response = await fetch(
+          `http://localhost:5000/api/listings/${editListing?.id}`,
+          {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              // Don't set Content-Type for FormData
+            },
+            body: formData,
+          }
+        );
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(errorText);
+        }
       }
 
+      // ✅ Success handling
       resetEditForm();
       setCurrentPage(1);
       setListings([]);
       fetchListings(1, false);
       alert("Listing updated successfully!");
     } catch (err: any) {
-      console.error("Error updating listing:", err);
-      alert(err.message || "Failed to update listing.");
+      console.error("❌ Update error details:", err);
+      alert(`Failed to update listing: ${err.message || "Unknown error"}`);
     }
   };
 
-  // Form reset functions
+  const handleStatusUpdate = async (status: string) => {
+    if (!statusListing) return;
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/listing/${statusListing.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            bookingStatus: status,
+            updatedOn: new Date().toISOString(),
+            updatedBy: "currentUserId",
+          }),
+        }
+      );
+      if (!response.ok) throw new Error("Failed to update status");
+      setListings(
+        listings.map((l) =>
+          l.id === statusListing.id ? { ...l, bookingStatus: status } : l
+        )
+      );
+      setShowStatusModal(false);
+      alert("Status updated successfully!");
+    } catch (err) {
+      console.error("Error updating status:", err);
+      alert("Failed to update status.");
+    }
+  };
+
   const resetAddForm = () => {
     setShowModal(false);
     setName("");
@@ -437,6 +541,10 @@ export default function MyListings({ token, onTokenExpired }: MyListingsProps) {
     setAgreementDuration("");
     setImages([]);
     setImagePreview([]);
+    setBookingStatus("available");
+    setTransactionImage(null);
+    setModeOfPayment("");
+    setBookedBy("");
   };
 
   const resetEditForm = () => {
@@ -468,9 +576,12 @@ export default function MyListings({ token, onTokenExpired }: MyListingsProps) {
     setEditAgreementDuration("");
     setEditImages([]);
     setEditImagePreview([]);
+    setEditBookingStatus("available");
+    setEditTransactionImage(null);
+    setEditModeOfPayment("");
+    setEditBookedBy("");
   };
 
-  // Open edit modal with selected item's data
   const openEditModal = (item: Listing) => {
     setEditImages([]);
     setEditImagePreview([]);
@@ -499,10 +610,18 @@ export default function MyListings({ token, onTokenExpired }: MyListingsProps) {
     setEditShownBy(item.shown_by || "");
     setEditBookingDate(item.booking_date || "");
     setEditAgreementDuration(item.agreement_duration || "");
+    setEditBookingStatus(item.bookingStatus || "available");
+    setEditTransactionImage(null);
+    setEditModeOfPayment(item.mode_of_payment || "");
+    setEditBookedBy(item.bookedBy || "");
     setEditModal(true);
   };
 
-  // Initial load
+  const openStatusModal = (item: Listing) => {
+    setStatusListing(item);
+    setShowStatusModal(true);
+  };
+
   useEffect(() => {
     if (token) {
       setCurrentPage(1);
@@ -1353,6 +1472,38 @@ export default function MyListings({ token, onTokenExpired }: MyListingsProps) {
                   value={editAgreementDuration}
                   onChange={(e) => setEditAgreementDuration(e.target.value)}
                 />
+              </div>
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Booking Status
+                </label>
+                <select
+                  value={editBookingStatus} // ✅ Correct state variable
+                  onChange={(e) => setEditBookingStatus(e.target.value)} // ✅ Correct setter
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                >
+                  <option value="available">Available</option>
+                  <option value="booked">Booked</option>
+                </select>
+              </div>
+
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Booked By
+                </label>
+                <select
+                  value={editBookedBy} // ✅ Correct state variable
+                  onChange={(e) => setEditBookedBy(e.target.value)} // ✅ Correct setter
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  disabled={editBookingStatus !== "booked"} // Only enable when status is booked
+                >
+                  <option value="">Select employee</option>
+                  {employees.map((emp) => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {editListing.images && editListing.images.length > 0 && (

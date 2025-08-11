@@ -213,7 +213,7 @@ const BookAppointment = () => {
                 <td className="border px-2">{a.employee_name || "-"}</td>
                 <td className="border px-2">
                   {a.customer_photo ? (
-                    <Image
+                    <img
                       src={`http://localhost:5000/uploads/${a.customer_photo}`}
                       alt="Customer"
                       width={80}

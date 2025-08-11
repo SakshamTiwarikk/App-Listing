@@ -48,6 +48,12 @@ const Sidebar: React.FC<SidebarProps> = ({
       icon: "⚙️",
       description: "App preferences",
     },
+    {
+      id: "rent-collection",
+      label: "Rent Collection",
+      icon: "💰",
+      description: "Manage rent payments",
+    },
   ];
 
   return (
