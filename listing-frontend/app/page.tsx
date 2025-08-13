@@ -1,30 +1,28 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import React, { useState } from 'react';
+import Navbar from '../app/dashboard/components/Navbar';
+import HeroSection from './dashboard/components/HeroSection';
+import PropertyServices from './dashboard/components/PropertyServices';
+import PopularLocalities from './dashboard/components/PopularLocalities';
+import ExclusiveOwner from './dashboard/components/ExclusiveOwner';
+import FreshProperties from './dashboard/components/FreshProperties';
+import PropertyOptions from './dashboard/components/PropertyOptions';
+import Footer from './dashboard/components/Footer';
 
-export default function HomePage() {
-  const router = useRouter();
-
+const LandingPage: React.FC = () => {
   return (
-    <div
-      className="h-screen w-full bg-cover bg-center flex items-center justify-center"
-      style={{
-        backgroundImage:
-          "url('https://images.unsplash.com/photo-1506765515384-028b60a970df?auto=format&fit=crop&w=1950&q=80')",
-      }}
-    >
-      <div className="bg-black bg-opacity-60 p-10 rounded-lg text-white text-center max-w-md">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Listing App</h1>
-        <p className="mb-6 text-lg">
-          Start by registering your account to list and manage your items.
-        </p>
-        <button
-          onClick={() => router.push("/register")}
-          className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-md font-semibold transition duration-300"
-        >
-          Go to Register
-        </button>
-      </div>
+    <div className="min-h-screen bg-white">
+      <Navbar />
+      <HeroSection />
+      <PropertyServices />
+      <PopularLocalities />
+      <ExclusiveOwner />
+      <FreshProperties />
+      <PropertyOptions />
+      <Footer />
     </div>
   );
-}
+};
+
+export default LandingPage;
