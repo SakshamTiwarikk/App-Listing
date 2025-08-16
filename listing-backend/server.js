@@ -20,7 +20,12 @@ if (!fs.existsSync(uploadsDir)) {
 }
 
 // Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: ["https://app-listing-omega.vercel.app/"], // replace with your real Vercel domain
+    credentials: true,
+  })
+);
 
 // ✅ Keep this for normal JSON requests (non-file upload routes)
 app.use(express.json({ limit: "50mb" }));
@@ -35,7 +40,6 @@ app.use("/api", listingRoutes);
 app.use("/api/employees", employeeRoutes);
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/rent", rentRoutes);
-
 
 // Health check
 app.get("/", (req, res) => {
