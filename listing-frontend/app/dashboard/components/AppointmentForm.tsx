@@ -3,9 +3,16 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
+interface AppointmentData {
+  customer_name?: string;
+  mobile_number?: string;
+  property_requirement?: string;
+  assigned_employee_id?: number | string;
+}
+
 interface AppointmentFormProps {
-  initialData?: any;
-  onSubmit: (form: any) => Promise<void>;
+  initialData?: AppointmentData;
+  onSubmit: (form: AppointmentData) => Promise<void>;
   onCancel: () => void;
 }
 

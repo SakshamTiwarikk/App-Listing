@@ -45,7 +45,7 @@ async function readEmployees() {
 }
 
 // Write employees to file
-async function writeEmployees(employees: any[]) {
+async function writeEmployees(employees: unknown[]) {
   await ensureDataDir();
   await fs.writeFile(DATA_FILE, JSON.stringify(employees, null, 2));
 }

@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star, MapPin } from "lucide-react";
+import Image from "next/image";
 
 const PopularLocalities = () => {
   const localities = [
@@ -73,9 +74,11 @@ const PopularLocalities = () => {
               className="overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group"
             >
               <div className="relative">
-                <img
+                <Image
                   src={locality.image}
                   alt={locality.name}
+                  layout="fill"
+                  objectFit="cover"
                   className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                 />
                 <div className="absolute top-4 right-4">

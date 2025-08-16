@@ -89,7 +89,7 @@ const Navbar: React.FC = () => {
                 PropertyBricks
               </div>
               <div className="text-xs text-gray-500 hidden sm:block">
-                India's No.1 Property Site
+                India&#39;s No.1 Property Site
               </div>
             </Link>
 

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import Image from "next/image";
 
 interface Listing {
   id: number;
@@ -90,13 +91,15 @@ const RentCollection: React.FC<RentCollectionProps> = ({
 
       console.log("Filtered booked + pending listings:", bookedPendingListings);
       setBookedListings(bookedPendingListings);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error fetching booked listings:", error);
 
-      if (error.response?.status === 401) {
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
         setError("Authentication failed. Please login again.");
-      } else {
+      } else if (error instanceof Error) {
         setError(`Failed to fetch booked listings: ${error.message}`);
+      } else {
+        setError("Failed to fetch booked listings");
       }
     } finally {
       setLoading(false);
@@ -170,7 +173,7 @@ const RentCollection: React.FC<RentCollectionProps> = ({
 
       // ✅ Debug: Log what we're sending
       console.log("Sending FormData:");
-      for (let [key, value] of formData.entries()) {
+      for (const [key, value] of formData.entries()) {
         console.log(key, value);
       }
 
@@ -207,19 +210,25 @@ const RentCollection: React.FC<RentCollectionProps> = ({
           refreshListings();
         }, 1000);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("❌ Full error details:", error);
-      console.error("❌ Response data:", error.response?.data);
-      console.error("❌ Response status:", error.response?.status);
+      if (axios.isAxiosError(error)) {
+        console.error("❌ Response data:", error.response?.data);
+        console.error("❌ Response status:", error.response?.status);
 
-      if (error.response?.status === 401) {
-        alert("Authentication failed. Please login again.");
+        if (error.response?.status === 401) {
+          alert("Authentication failed. Please login again.");
+        } else {
+          alert(
+            `Failed to process rent collection: ${
+              error.response?.data?.message || "Unknown error"
+            }`
+          );
+        }
+      } else if (error instanceof Error) {
+        alert(`Failed to process rent collection: ${error.message}`);
       } else {
-        alert(
-          `Failed to process rent collection: ${
-            error.response?.data?.message || error.message
-          }`
-        );
+        alert("Failed to process rent collection: Unknown error");
       }
     } finally {
       setCollectingRent(false);
@@ -230,7 +239,7 @@ const RentCollection: React.FC<RentCollectionProps> = ({
     if (token) {
       refreshListings();
     }
-  }, [companyId, token]);
+  }, [companyId, token, refreshListings]);
 
   // Auto-refresh every 30 seconds to catch updates
   useEffect(() => {
@@ -238,7 +247,7 @@ const RentCollection: React.FC<RentCollectionProps> = ({
       const interval = setInterval(refreshListings, 30000);
       return () => clearInterval(interval);
     }
-  }, [token]);
+  }, [token, refreshListings]);
 
   if (loading) {
     return (
@@ -377,15 +386,12 @@ const RentCollection: React.FC<RentCollectionProps> = ({
                   <div className="flex space-x-2 overflow-x-auto pb-2">
                     {listing.images.slice(0, 3).map((img, index) => (
                       <div key={index} className="flex-shrink-0">
-                        <img
+                        <Image
                           src={`http://localhost:5000/uploads/${img}`}
                           alt={`Listing ${index + 1}`}
+                          width={64}
+                          height={64}
                           className="w-16 h-16 object-cover rounded border border-gray-200"
-                          onError={(e) => {
-                            console.error(`Failed to load image: ${img}`);
-                            (e.target as HTMLImageElement).style.display =
-                              "none";
-                          }}
                         />
                       </div>
                     ))}

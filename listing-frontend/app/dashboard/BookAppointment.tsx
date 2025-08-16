@@ -3,11 +3,21 @@
 import React, { useEffect, useState } from "react";
 import AppointmentForm from "./components/AppointmentForm";
 import { useDebounce } from "../../hooks/useDebounce"; // Adjust path as needed
-import Image from "next/image";
 
 const BookAppointment = () => {
-  const [appointments, setAppointments] = useState<any[]>([]);
-  const [editing, setEditing] = useState<any | null>(null);
+  interface Appointment {
+    id: number;
+    customer_name: string;
+    mobile_number: string;
+    property_requirement: string;
+    assigned_to?: string;
+    employee_name?: string;
+    customer_photo?: string;
+    // Add other fields as needed
+  }
+
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [editing, setEditing] = useState<Appointment | null>(null);
   const [loading, setLoading] = useState(false);
 
   // Search
@@ -44,7 +54,7 @@ const BookAppointment = () => {
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
+          },
         }
       );
 
@@ -150,7 +160,7 @@ const BookAppointment = () => {
       <h1 className="text-xl font-bold mb-4">Book Appointment</h1>
 
       <AppointmentForm
-        initialData={editing}
+        initialData={editing ?? undefined}
         onSubmit={handleSubmit}
         onCancel={() => setEditing(null)}
       />

@@ -53,8 +53,12 @@ const EmployeePage = () => {
 
       const data = await res.json();
       setEmployees(data.employees || data);
-    } catch (err: any) {
-      setError(err.message || "Something went wrong");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Something went wrong");
+      }
     } finally {
       setLoading(false);
     }
@@ -123,8 +127,12 @@ const EmployeePage = () => {
         aadhaar_card: null,
         pan_card: null,
       });
-    } catch (err: any) {
-      alert("Error: " + err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        alert("Error: " + err.message);
+      } else {
+        alert("An unknown error occurred.");
+      }
     }
   };
 

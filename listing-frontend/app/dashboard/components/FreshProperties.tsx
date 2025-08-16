@@ -98,7 +98,7 @@ const FreshProperties = () => {
           <div>
             <h2 className="text-3xl font-bold mb-4">Fresh Properties</h2>
             <p className="text-muted-foreground text-lg">
-              Recently listed properties you don't want to miss
+              Recently listed properties you don&apos;t want to miss
             </p>
           </div>
           <Button variant="outline" className="hidden md:flex">

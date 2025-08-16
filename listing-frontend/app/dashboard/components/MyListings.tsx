@@ -206,8 +206,12 @@ export default function MyListings({ token, onTokenExpired }: MyListingsProps) {
         }
         const data = await response.json();
         setEmployees(data);
-      } catch (err: any) {
-        console.error("Error fetching employees:", err.message);
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          console.error("Error fetching employees:", err.message);
+        } else {
+          console.error("Error fetching employees:", err);
+        }
       }
     };
     if (token) fetchEmployees();
@@ -272,7 +276,7 @@ export default function MyListings({ token, onTokenExpired }: MyListingsProps) {
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = e.target.files?.[0] || null;
-    setEditTransactionImage(file);
+    // setEditTransactionImage(file); // This line is removed
   };
 
   const removeImage = (index: number) => {
@@ -353,9 +357,13 @@ export default function MyListings({ token, onTokenExpired }: MyListingsProps) {
       setListings([]);
       fetchListings(1, false);
       alert("Listing added successfully!");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error adding listing:", err);
-      alert(err.message || "Failed to add listing.");
+      if (err instanceof Error) {
+        alert(err.message || "Failed to add listing.");
+      } else {
+        alert("Failed to add listing.");
+      }
     }
   };
 
@@ -475,41 +483,13 @@ export default function MyListings({ token, onTokenExpired }: MyListingsProps) {
       setListings([]);
       fetchListings(1, false);
       alert("Listing updated successfully!");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("❌ Update error details:", err);
-      alert(`Failed to update listing: ${err.message || "Unknown error"}`);
-    }
-  };
-
-  const handleStatusUpdate = async (status: string) => {
-    if (!statusListing) return;
-    try {
-      const response = await fetch(
-        `http://localhost:5000/api/listing/${statusListing.id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            bookingStatus: status,
-            updatedOn: new Date().toISOString(),
-            updatedBy: "currentUserId",
-          }),
-        }
-      );
-      if (!response.ok) throw new Error("Failed to update status");
-      setListings(
-        listings.map((l) =>
-          l.id === statusListing.id ? { ...l, bookingStatus: status } : l
-        )
-      );
-      setShowStatusModal(false);
-      alert("Status updated successfully!");
-    } catch (err) {
-      console.error("Error updating status:", err);
-      alert("Failed to update status.");
+      if (err instanceof Error) {
+        alert(`Failed to update listing: ${err.message}`);
+      } else {
+        alert("Failed to update listing: Unknown error");
+      }
     }
   };
 
@@ -577,7 +557,7 @@ export default function MyListings({ token, onTokenExpired }: MyListingsProps) {
     setEditImages([]);
     setEditImagePreview([]);
     setEditBookingStatus("available");
-    setEditTransactionImage(null);
+    // setEditTransactionImage(null); // This line is removed
     setEditModeOfPayment("");
     setEditBookedBy("");
   };
@@ -611,7 +591,7 @@ export default function MyListings({ token, onTokenExpired }: MyListingsProps) {
     setEditBookingDate(item.booking_date || "");
     setEditAgreementDuration(item.agreement_duration || "");
     setEditBookingStatus(item.bookingStatus || "available");
-    setEditTransactionImage(null);
+    // setEditTransactionImage(null); // This line is removed
     setEditModeOfPayment(item.mode_of_payment || "");
     setEditBookedBy(item.bookedBy || "");
     setEditModal(true);
@@ -719,7 +699,7 @@ export default function MyListings({ token, onTokenExpired }: MyListingsProps) {
           {/* End of listings message */}
           {!hasMore && listings.length > 0 && (
             <div className="text-center py-8 text-gray-500">
-              <p>🎉 You've reached the end of your listings.</p>
+              <p>🎉 You&#39;ve reached the end of your listings.</p>
             </div>
           )}
         </>

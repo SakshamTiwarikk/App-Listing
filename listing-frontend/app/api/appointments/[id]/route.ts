@@ -4,10 +4,11 @@ const BASE = "http://localhost:5000/api/appointments";
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const body = await req.json();
-  const res = await fetch(`${BASE}/${params.id}`, {
+  const res = await fetch(`${BASE}/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -18,9 +19,10 @@ export async function PUT(
 
 export async function DELETE(
   _: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const res = await fetch(`${BASE}/${params.id}`, { method: "DELETE" });
+  const { id } = await params;
+  const res = await fetch(`${BASE}/${id}`, { method: "DELETE" });
 
   if (res.status === 204) {
     return new NextResponse(null, { status: 204 });

@@ -22,7 +22,7 @@ const Footer = () => {
               <h3 className="text-xl font-bold">Magicbricks</h3>
             </div>
             <p className="text-gray-300 mb-4 text-sm leading-relaxed">
-              India's No. 1 property site. Find properties for sale and rent
+              India&#39;s No. 1 property site. Find properties for sale and rent
               across India with verified listings, photos, and genuine reviews.
             </p>
             <div className="flex space-x-3">
